@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using FishNet.Connection;
+using FishNet.Managing;
 using FishNet.Managing.Server;
-using FishNet.Object;
 using FishNet.Transporting;
 using UnityEngine;
 
@@ -12,29 +12,34 @@ namespace FishNet.Alven.SessionManagement
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("FishNet/Manager/ServerSessionManager")]
+    [DefaultExecutionOrder(-20000)]
+    [RequireComponent(typeof(ServerManager))]
     public sealed class ServerSessionManager : MonoBehaviour
     {
-        [SerializeField] private ServerManager _serverManager;
-
+        public NetworkManager NetworkManager => _serverManager.NetworkManager;
         public IReadOnlyDictionary<int, SessionPlayer> Players => _playersByClientIds;
         public bool IsSessionStarted;
 
         public event Action OnSessionStarted;
-        public event Action<SessionPlayer, PlayerConnectionState> OnPlayerConnectionState;
+        public event Action<SessionPlayer, RemotePlayerConnectionStateArgs> OnRemotePlayerConnectionState;
 
         private readonly Dictionary<string, SessionPlayer> _players = new Dictionary<string, SessionPlayer>();
         private readonly Dictionary<int, SessionPlayer> _playersByClientIds = new Dictionary<int, SessionPlayer>();
         private readonly Dictionary<int, SessionPlayer> _playersByConnectionIds = new Dictionary<int, SessionPlayer>();
+        private ServerManager _serverManager;
 
         private int _nextClientPlayerId;
-        private bool _shareIds;
+        internal bool ShareIds;
 
         private void Awake()
         {
+            _serverManager = GetComponent<ServerManager>();
+            
+            if (!NetworkManager) return;
             Type type = _serverManager.GetType();
             FieldInfo fieldInfo = type.GetField("_shareIds", BindingFlags.NonPublic | BindingFlags.Instance);
-            _shareIds = (bool)fieldInfo!.GetValue(_serverManager);
-            _serverManager.NetworkManager.RegisterInstance(this);
+            ShareIds = (bool)fieldInfo!.GetValue(_serverManager);
+            NetworkManager.RegisterInstance(this);
             
             _serverManager.OnRemoteConnectionState += OnRemoteConnectionState;
             _serverManager.OnServerConnectionState += OnServerConnectionState;
@@ -42,7 +47,8 @@ namespace FishNet.Alven.SessionManagement
 
         private void OnDestroy()
         {
-            _serverManager.NetworkManager.UnregisterInstance<ServerSessionManager>();
+            if (!NetworkManager) return;
+            NetworkManager.UnregisterInstance<ServerSessionManager>();
             
             _serverManager.OnRemoteConnectionState -= OnRemoteConnectionState;
             _serverManager.OnServerConnectionState -= OnServerConnectionState;
@@ -50,14 +56,12 @@ namespace FishNet.Alven.SessionManagement
             Reset();
         }
 
-        [Server]
         public void StartSession()
         {
             IsSessionStarted = true;
             OnSessionStarted?.Invoke();
         }
 
-        [Server]
         public void EndSession()
         {
             IsSessionStarted = false;
@@ -80,14 +84,15 @@ namespace FishNet.Alven.SessionManagement
         {
             if (!_players.TryGetValue(playerId, out SessionPlayer player))
             {
-                player = new SessionPlayer(_serverManager.NetworkManager, _nextClientPlayerId, connection.ClientId, true, playerId);
+                player = new SessionPlayer(NetworkManager, _nextClientPlayerId, connection, playerId);
                 _nextClientPlayerId++;
                 
                 AddPlayer(player);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.Connected, false);
-                BroadcastPlayerAuthenticated(player);
+                BroadcastPlayerConnected(player, false);
+                connection.OnLoadedStartScenes += OnLoadedStartScenes;
                 authenticator.InvokeAuthenticationResult(connection, true);
-                OnPlayerConnectionState?.Invoke(player, PlayerConnectionState.Connected);
+                InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.Connected);
                 return true;
             }
 
@@ -95,42 +100,59 @@ namespace FishNet.Alven.SessionManagement
             {
                 ReconnectPlayer(player, connection);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.Reconnected, false);
+                BroadcastPlayerConnected(player, true);
+                connection.OnLoadedStartScenes += OnLoadedStartScenes;
                 authenticator.InvokeAuthenticationResult(connection, true);
-                OnPlayerConnectionState?.Invoke(player, PlayerConnectionState.Reconnected);
+                InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.Reconnected);
                 return true;
             }
 
-            _serverManager.NetworkManager.LogWarning("Player with id " + playerId + " is already connected. Authentication failed.");
+            NetworkManager.LogWarning("Player with id " + playerId + " is already connected. Authentication failed.");
             authenticator.InvokeAuthenticationResult(connection, false);
             return false;
         }
 
+        private void OnLoadedStartScenes(NetworkConnection connection, bool asServer)
+        {
+            if (!asServer) return;
+
+            connection.OnLoadedStartScenes -= OnLoadedStartScenes;
+        }
+
+        private void BroadcastPlayerConnected(SessionPlayer player, bool isReconnected)
+        {
+            var message = new PlayerConnectedBroadcast(player, isReconnected);
+            _serverManager.Broadcast(player.NetworkConnection, message, false);
+        }
+
         private void ReconnectPlayer(SessionPlayer player, NetworkConnection connection)
         {
-            player.SetupReconnection(connection.ClientId);
             _playersByConnectionIds.Remove(player.ConnectionId);
             _playersByConnectionIds.Add(connection.ClientId, player);
+            player.SetupReconnection(connection);
         }
 
-        private void BroadcastPlayerAuthenticated(SessionPlayer player)
+        private void DisconnectPlayer(SessionPlayer player, bool permanently)
         {
-            _serverManager.Broadcast(player.NetworkConnection, new PlayerAuthenticatedBroadcast(player), false);
-        }
-
-        private void DisconnectPlayer(SessionPlayer player)
-        {
-            if (IsSessionStarted)
+            if (permanently)
             {
-                OnPlayerConnectionState?.Invoke(player, PlayerConnectionState.Disconnected);
-                BroadcastPlayerConnectionChange(player, PlayerConnectionState.Disconnected);
+                InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.PermanentlyDisconnected);
+                BroadcastPlayerConnectionChange(player, PlayerConnectionState.PermanentlyDisconnected);
+                RemovePlayer(player);
+                player.Dispose();
             }
             else
             {
-                OnPlayerConnectionState?.Invoke(player, PlayerConnectionState.Leaved);
-                RemovePlayer(player);
-                BroadcastPlayerConnectionChange(player, PlayerConnectionState.Leaved);
-                player.Dispose();
+                InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.TemporarilyDisconnected);
+                BroadcastPlayerConnectionChange(player, PlayerConnectionState.TemporarilyDisconnected);
+                // player.DisconnectTemporarily();
             }
+        }
+
+        private void InvokeOnRemotePlayerConnectionState(SessionPlayer player, PlayerConnectionState state)
+        {
+            var args = new RemotePlayerConnectionStateArgs(state, player.ClientPlayerId);
+            OnRemotePlayerConnectionState?.Invoke(player, args);
         }
 
         private void OnServerConnectionState(ServerConnectionStateArgs args)
@@ -145,7 +167,8 @@ namespace FishNet.Alven.SessionManagement
         {
             if (connection.Authenticated && args.ConnectionState == RemoteConnectionState.Stopped)
             {
-                DisconnectPlayer(GetPlayer(connection));
+                connection.OnLoadedStartScenes -= OnLoadedStartScenes;
+                DisconnectPlayer(GetPlayer(connection), !IsSessionStarted);
             }
         }
 
@@ -182,7 +205,7 @@ namespace FishNet.Alven.SessionManagement
         {
             NetworkConnection conn = player.NetworkConnection;
             bool connected = state == PlayerConnectionState.Connected || state == PlayerConnectionState.Reconnected;
-            if (_shareIds)
+            if (ShareIds)
             {
                 var changeMsg = new PlayerConnectionChangeBroadcast(player.ClientPlayerId, conn.ClientId, state);
                 foreach (NetworkConnection c in _serverManager.Clients.Values)

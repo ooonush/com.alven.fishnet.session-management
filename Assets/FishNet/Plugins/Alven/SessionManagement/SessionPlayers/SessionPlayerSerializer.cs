@@ -44,7 +44,7 @@ namespace FishNet.Alven.SessionManagement
                          * without being in server/client side collection. */
                         else
                         {
-                            return new SessionPlayer(networkManager, value, connection.ClientId, true);
+                            return new SessionPlayer(networkManager, value, connection);
                         }
                     }
                     //Only server and not found.
@@ -68,7 +68,7 @@ namespace FishNet.Alven.SessionManagement
                      * initialize it either way. Connections rarely come through
                      * without being in server/client side collection. */
                     else
-                        return new SessionPlayer(networkManager, value, connection.ClientId, false);
+                        return new SessionPlayer(networkManager, value, connection);
                 }
             }
         }

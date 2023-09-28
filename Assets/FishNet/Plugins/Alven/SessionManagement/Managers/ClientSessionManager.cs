@@ -11,62 +11,89 @@ namespace FishNet.Alven.SessionManagement
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("FishNet/Manager/ClientSessionManager")]
+    [DefaultExecutionOrder(-20000)]
+    [RequireComponent(typeof(ClientManager))]
     public sealed class ClientSessionManager : MonoBehaviour
     {
-        [SerializeField] private ClientManager _clientManager;
-
         public SessionPlayer Player { get; private set; } = SessionPlayer.Empty;
         public IReadOnlyDictionary<int, SessionPlayer> Players => _players;
         public NetworkManager NetworkManager => _clientManager.NetworkManager;
 
-        // public event Action<RemotePlayerStateArgs> OnPlayerConnectionState;
+        public event Action<RemotePlayerConnectionStateArgs> OnRemotePlayerConnectionState;
+        public event Action<PlayerConnectionStateArgs> OnPlayerConnectionState;
 
         private readonly Dictionary<int, SessionPlayer> _players = new Dictionary<int, SessionPlayer>();
         private readonly Dictionary<int, SessionPlayer> _playersByConnectionIds = new Dictionary<int, SessionPlayer>();
+        private ClientManager _clientManager;
 
         private void Awake()
         {
+            _clientManager = GetComponent<ClientManager>();
+            if (!NetworkManager) return;
             NetworkManager.RegisterInstance(this);
-            
             _clientManager.OnClientConnectionState += OnClientConnectionState;
-            _clientManager.OnRemoteConnectionState += OnRemoteConnectionState;
+            _clientManager.OnAuthenticated += OnAuthenticated;
             
+            _clientManager.RegisterBroadcast<PlayerConnectedBroadcast>(OnPlayerConnectedBroadcast);
             _clientManager.RegisterBroadcast<ConnectedPlayersBroadcast>(OnConnectedPlayersBroadcast);
-            _clientManager.RegisterBroadcast<PlayerAuthenticatedBroadcast>(OnPlayerAuthenticatedBroadcast);
             _clientManager.RegisterBroadcast<PlayerConnectionChangeBroadcast>(OnPlayerConnectionBroadcast);
         }
 
         private void OnDestroy()
         {
+            if (!NetworkManager) return;
             NetworkManager.UnregisterInstance<ClientSessionManager>();
-            
+
             _clientManager.OnClientConnectionState -= OnClientConnectionState;
-            _clientManager.OnRemoteConnectionState -= OnRemoteConnectionState;
-            
+            _clientManager.OnAuthenticated -= OnAuthenticated;
+
+            _clientManager.UnregisterBroadcast<PlayerConnectedBroadcast>(OnPlayerConnectedBroadcast);
             _clientManager.UnregisterBroadcast<ConnectedPlayersBroadcast>(OnConnectedPlayersBroadcast);
-            _clientManager.UnregisterBroadcast<PlayerAuthenticatedBroadcast>(OnPlayerAuthenticatedBroadcast);
             _clientManager.UnregisterBroadcast<PlayerConnectionChangeBroadcast>(OnPlayerConnectionBroadcast);
-            
+    
             Reset();
         }
 
         /// <summary>
         /// Called before ClientManager.OnAuthenticated.
         /// </summary>
-        private void OnPlayerAuthenticatedBroadcast(PlayerAuthenticatedBroadcast broadcast)
+        private void OnPlayerConnectedBroadcast(PlayerConnectedBroadcast broadcast)
         {
             Player = broadcast.Player;
+            Player.IsConnectedFirstTime = !broadcast.IsReconnected;
+        }
+
+        private void OnAuthenticated()
+        {
+            if (Player.IsConnectedFirstTime)
+            {
+                InvokeOnPlayerConnectionState(LocalPlayerConnectionState.Connected);
+            }
+            else
+            {
+                InvokeOnPlayerConnectionState(LocalPlayerConnectionState.Reconnected);
+            }
         }
 
         private void OnClientConnectionState(ClientConnectionStateArgs args)
         {
             if (args.ConnectionState == LocalConnectionState.Stopped)
             {
+                InvokeOnPlayerConnectionState(LocalPlayerConnectionState.Disconnected);
                 Reset();
             }
         }
 
-        private void Reset() => ClearPlayers();
+        private void InvokeOnPlayerConnectionState(LocalPlayerConnectionState state)
+        {
+            OnPlayerConnectionState?.Invoke(new PlayerConnectionStateArgs(state));
+        }
+
+        private void Reset()
+        {
+            Player = SessionPlayer.Empty;
+            ClearPlayers();
+        }
 
         private void OnConnectedPlayersBroadcast(ConnectedPlayersBroadcast broadcast)
         {
@@ -77,7 +104,7 @@ namespace FishNet.Alven.SessionManagement
                 int clientPlayerId = broadcast.ClientPlayerIds[i];
                 int connectionId = broadcast.ConnectionIds[i];
 
-                AddPlayer(new SessionPlayer(NetworkManager, clientPlayerId, connectionId, false));
+                AddPlayer(new SessionPlayer(NetworkManager, clientPlayerId, connectionId));
             }
         }
 
@@ -90,28 +117,24 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
-        /// <summary>
-        /// Called before OnRemoteConnectionState.
-        /// </summary>
         private void OnPlayerConnectionBroadcast(PlayerConnectionChangeBroadcast args)
         {
             int clientPlayerId = args.ClientPlayerId;
-            Debug.Log(args.State);
             PlayerConnectionState state = args.State;
             switch (state)
             {
                 case PlayerConnectionState.Connected:
-                    AddPlayer(new SessionPlayer(NetworkManager, clientPlayerId, args.ConnectionId, false));
+                    AddPlayer(new SessionPlayer(NetworkManager, clientPlayerId, args.ConnectionId));
                     // InvokeOnPlayerConnectionState will be called from OnRemoteConnectionState.
                     break;
                 case PlayerConnectionState.Reconnected:
                     ReconnectPlayer(_playersByConnectionIds[clientPlayerId], args.ConnectionId);
                     // InvokeOnPlayerConnectionState will be called from OnRemoteConnectionState.
                     break;
-                case PlayerConnectionState.Disconnected:
+                case PlayerConnectionState.TemporarilyDisconnected:
                     InvokeOnPlayerConnectionState(state, clientPlayerId);
                     break;
-                case PlayerConnectionState.Leaved:
+                case PlayerConnectionState.PermanentlyDisconnected:
                     if (Players.TryGetValue(clientPlayerId, out SessionPlayer p))
                     {
                         RemovePlayer(p);
@@ -124,32 +147,10 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
-        /// <summary>
-        /// Called after OnPlayerConnectionBroadcast.
-        /// </summary>
-        private void OnRemoteConnectionState(RemoteConnectionStateArgs args)
-        {
-            switch (args.ConnectionState)
-            {
-                case RemoteConnectionState.Started:
-                    SessionPlayer player = _players.Values.First(p => p.NetworkConnection.ClientId == args.ConnectionId);
-                    PlayerConnectionState state = player.IsConnectedFirstTime
-                        ? PlayerConnectionState.Connected
-                        : PlayerConnectionState.Reconnected;
-                    InvokeOnPlayerConnectionState(state, player.ClientPlayerId);
-                    break;
-                case RemoteConnectionState.Stopped:
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        // TODO
         private void InvokeOnPlayerConnectionState(PlayerConnectionState state, int clientPlayerId)
         {
-            var rcs = new RemotePlayerStateArgs(state, clientPlayerId);
-            // OnPlayerConnectionState?.Invoke(rcs);
+            var rcs = new RemotePlayerConnectionStateArgs(state, clientPlayerId);
+            OnRemotePlayerConnectionState?.Invoke(rcs);
         }
 
         private void AddPlayer(SessionPlayer player)
@@ -170,7 +171,7 @@ namespace FishNet.Alven.SessionManagement
             _playersByConnectionIds.Remove(player.ConnectionId);
             _playersByConnectionIds[connectionId] = player;
         }
-        
+
         public SessionPlayer GetPlayer(NetworkConnection connection) => _playersByConnectionIds[connection.ClientId];
     }
 }

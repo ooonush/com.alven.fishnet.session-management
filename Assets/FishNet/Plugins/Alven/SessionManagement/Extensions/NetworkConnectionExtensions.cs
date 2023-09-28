@@ -6,6 +6,11 @@ namespace FishNet.Alven.SessionManagement
     {
         public static SessionPlayer GetSessionPlayer(this NetworkConnection connection)
         {
+            if (connection == null || !connection.IsValid)
+            {
+                return SessionPlayer.Empty;
+            }
+            
             if (connection.NetworkManager.ServerManager.Clients.TryGetValue(connection.ClientId, out NetworkConnection c))
             {
                 if (ReferenceEquals(connection, c))
