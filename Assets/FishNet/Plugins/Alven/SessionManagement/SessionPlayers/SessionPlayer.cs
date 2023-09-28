@@ -7,12 +7,18 @@ namespace FishNet.Alven.SessionManagement
 {
     public sealed class SessionPlayer
     {
-        public const int UNSET_CLIENTID = -1;
+        internal const int UNSET_CLIENTID = -1;
         public static SessionPlayer Empty { get; private set; } = new SessionPlayer();
 
         public readonly HashSet<NetworkPlayerObject> Objects = new HashSet<NetworkPlayerObject>();
         public NetworkManager NetworkManager { get; private set; }
+        /// <summary>
+        /// Player Id, available to clients.
+        /// </summary>
         public int ClientPlayerId { get; private set; } = UNSET_CLIENTID;
+        /// <summary>
+        /// Available to server.
+        /// </summary>
         public string PlayerId { get; private set; }
         public bool IsLocalPlayer => ClientSessionManager.Player == this;
         public bool IsValid => ClientPlayerId != UNSET_CLIENTID;
@@ -57,7 +63,13 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
+        /// <summary>
+        /// Invokes when an NetworkPlayerObject is added for this player. Available to this connection and server.
+        /// </summary>
         public event Action<NetworkPlayerObject> OnObjectAdded;
+        /// <summary>
+        /// Invokes when an NetworkPlayerObject is removed for this player. Available to this connection and server.
+        /// </summary>
         public event Action<NetworkPlayerObject> OnObjectRemoved;
 
         internal bool IsConnectedFirstTime { get; set; } = true;

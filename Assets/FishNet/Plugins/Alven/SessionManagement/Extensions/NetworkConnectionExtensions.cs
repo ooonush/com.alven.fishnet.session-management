@@ -4,6 +4,11 @@ namespace FishNet.Alven.SessionManagement
 {
     public static class NetworkConnectionExtensions
     {
+        /// <summary>
+        /// SessionPlayer for this connection.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <returns></returns>
         public static SessionPlayer GetSessionPlayer(this NetworkConnection connection)
         {
             if (connection == null || !connection.IsValid)

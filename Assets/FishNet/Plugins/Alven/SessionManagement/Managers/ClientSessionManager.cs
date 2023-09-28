@@ -15,11 +15,25 @@ namespace FishNet.Alven.SessionManagement
     [RequireComponent(typeof(ClientManager))]
     public sealed class ClientSessionManager : MonoBehaviour
     {
+        /// <summary>
+        /// The local Session Player.
+        /// </summary>
         public SessionPlayer Player { get; private set; } = SessionPlayer.Empty;
+        /// <summary>
+        /// Connected Session Players by ClientPlayerIds.
+        /// </summary>
         public IReadOnlyDictionary<int, SessionPlayer> Players => _players;
+        /// <summary>
+        /// NetworkManager for client.
+        /// </summary>
         public NetworkManager NetworkManager => _clientManager.NetworkManager;
-
+        /// <summary>
+        /// Called after the remote Session Player connection state changes.
+        /// </summary>
         public event Action<RemotePlayerConnectionStateArgs> OnRemotePlayerConnectionState;
+        /// <summary>
+        /// Called after the local Session Player connection state changes.
+        /// </summary>
         public event Action<PlayerConnectionStateArgs> OnPlayerConnectionState;
 
         private readonly Dictionary<int, SessionPlayer> _players = new Dictionary<int, SessionPlayer>();
@@ -53,6 +67,8 @@ namespace FishNet.Alven.SessionManagement
     
             Reset();
         }
+
+        internal SessionPlayer GetPlayer(NetworkConnection connection) => _playersByConnectionIds[connection.ClientId];
 
         /// <summary>
         /// Called before ClientManager.OnAuthenticated.
@@ -171,7 +187,5 @@ namespace FishNet.Alven.SessionManagement
             _playersByConnectionIds.Remove(player.ConnectionId);
             _playersByConnectionIds[connectionId] = player;
         }
-
-        public SessionPlayer GetPlayer(NetworkConnection connection) => _playersByConnectionIds[connection.ClientId];
     }
 }

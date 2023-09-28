@@ -8,25 +8,34 @@ using UnityEngine;
 namespace FishNet.Alven.SessionManagement
 {
     [RequireComponent(typeof(NetworkObject))]
-    public class NetworkPlayerObject : NetworkBehaviour
+    public sealed class NetworkPlayerObject : NetworkBehaviour
     {
         [SyncVar(OnChange = nameof(OnOwnerPlayerChanged))]
         private SessionPlayer _ownerPlayer;
-
-        internal bool GivingOwnership;
+        /// <summary>
+        /// Owner SessionPlayer of this object.
+        /// </summary>
         public SessionPlayer OwnerPlayer => IsOffline ? null : _ownerPlayer;
+        /// <summary>
+        /// The local SessionPlayer of the client calling this method.
+        /// </summary>
         public SessionPlayer LocalPlayer => ClientSessionManager.Player;
         public ServerSessionManager ServerSessionManager => NetworkManager.GetServerSessionManager();
         public ClientSessionManager ClientSessionManager => NetworkManager.GetClientSessionManager();
 
+        /// <summary>
+        /// Invoked on after ownership has changed.
+        /// </summary>
         public event Action<SessionPlayer, SessionPlayer, bool> OnOwnershipPlayer;
+
+        internal bool GivingOwnership;
 
         internal void Initialize(SessionPlayer ownerPlayer)
         {
             SetOwner(ownerPlayer);
         }
 
-        internal void SetOwner(SessionPlayer newOwner)
+        private void SetOwner(SessionPlayer newOwner)
         {
             if (newOwner != null && newOwner.IsValid)
             {
@@ -38,6 +47,10 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
+        /// <summary>
+        /// Gives ownership to newOwner.
+        /// </summary>
+        /// <param name="newOwner">Session Player</param>
         [Server]
         public void GiveOwnership(SessionPlayer newOwner)
         {

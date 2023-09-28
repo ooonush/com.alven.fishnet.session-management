@@ -16,11 +16,22 @@ namespace FishNet.Alven.SessionManagement
     [RequireComponent(typeof(ServerManager))]
     public sealed class ServerSessionManager : MonoBehaviour
     {
+        /// <summary>
+        /// NetworkManager for server.
+        /// </summary>
         public NetworkManager NetworkManager => _serverManager.NetworkManager;
+        /// <summary>
+        /// Connected Session Players by ClientPlayerIds.
+        /// </summary>
         public IReadOnlyDictionary<int, SessionPlayer> Players => _playersByClientIds;
-        public bool IsSessionStarted;
-
+        public bool IsSessionStarted { get; private set; }
+        /// <summary>
+        /// Called after the server starts session.
+        /// </summary>
         public event Action OnSessionStarted;
+        /// <summary>
+        /// Called after the remote Session Player connection state changes.
+        /// </summary>
         public event Action<SessionPlayer, RemotePlayerConnectionStateArgs> OnRemotePlayerConnectionState;
 
         private readonly Dictionary<string, SessionPlayer> _players = new Dictionary<string, SessionPlayer>();
@@ -56,12 +67,19 @@ namespace FishNet.Alven.SessionManagement
             Reset();
         }
 
+        /// <summary>
+        /// Start Session. Players cannot permanently disconnect after this call.
+        /// </summary>
         public void StartSession()
         {
             IsSessionStarted = true;
             OnSessionStarted?.Invoke();
         }
 
+        /// <summary>
+        /// Start Session. Players can permanently disconnect after this call.
+        /// Temporarily disconnected players will be disconnected permanently.
+        /// </summary>
         public void EndSession()
         {
             IsSessionStarted = false;
@@ -70,7 +88,7 @@ namespace FishNet.Alven.SessionManagement
             {
                 if (!player.IsConnected)
                 {
-                    RemovePlayer(player);
+                    DisconnectPlayer(player, true);
                 }
             }
         }
@@ -138,6 +156,15 @@ namespace FishNet.Alven.SessionManagement
             {
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.PermanentlyDisconnected);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.PermanentlyDisconnected);
+
+                foreach (NetworkPlayerObject networkPlayerObject in player.Objects)
+                {
+                    if (networkPlayerObject.IsSpawned)
+                    {
+                        networkPlayerObject.Despawn();
+                    }
+                }
+
                 RemovePlayer(player);
                 player.Dispose();
             }
@@ -145,7 +172,6 @@ namespace FishNet.Alven.SessionManagement
             {
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.TemporarilyDisconnected);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.TemporarilyDisconnected);
-                // player.DisconnectTemporarily();
             }
         }
 

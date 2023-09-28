@@ -4,7 +4,7 @@
     {
         public readonly LocalPlayerConnectionState State;
 
-        public PlayerConnectionStateArgs(LocalPlayerConnectionState state)
+        internal PlayerConnectionStateArgs(LocalPlayerConnectionState state)
         {
             State = state;
         }

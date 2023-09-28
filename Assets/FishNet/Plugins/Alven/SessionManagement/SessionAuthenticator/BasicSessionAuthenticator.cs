@@ -5,6 +5,10 @@ using FishNet.Transporting;
 
 namespace FishNet.Alven.SessionManagement
 {
+    /// <summary>
+    /// Basic implementation of <see cref="SessionAuthenticator"/> for managing session players.
+    /// When the game starts, a random PlayerId is generated so that the player can reconnect to the session.
+    /// </summary>
     public sealed class BasicSessionAuthenticator : SessionAuthenticator
     {
         private string _playerId;

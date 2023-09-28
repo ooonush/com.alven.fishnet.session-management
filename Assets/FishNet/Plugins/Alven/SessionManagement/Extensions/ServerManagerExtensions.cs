@@ -6,6 +6,11 @@ namespace FishNet.Alven.SessionManagement
 {
     public static class ServerManagerExtensions
     {
+        /// <summary>
+        /// Spawns an object over the network. Can only be called on the server.
+        /// </summary>
+        /// <param name="playerObject">NetworkPlayerObject instance to spawn.</param>
+        /// <param name="player">SessionPlayer to give ownership to.</param>
         public static void Spawn(this ServerManager serverManager, NetworkPlayerObject playerObject, SessionPlayer player, Scene scene = default)
         {
             playerObject.GivingOwnership = true;
@@ -14,6 +19,11 @@ namespace FishNet.Alven.SessionManagement
             playerObject.GivingOwnership = false;
         }
 
+        /// <summary>
+        /// Spawns an object over the network. Can only be called on the server.
+        /// </summary>
+        /// <param name="networkObject">NetworkObject instance to spawn.</param>
+        /// <param name="player">SessionPlayer to give ownership to.</param>
         public static void Spawn(this ServerManager serverManager, NetworkObject networkObject, SessionPlayer player, Scene scene = default)
         {
             var networkPlayerObject = networkObject.GetComponent<NetworkPlayerObject>();
