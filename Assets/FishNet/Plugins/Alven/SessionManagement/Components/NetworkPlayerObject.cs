@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace FishNet.Alven.SessionManagement
 {
+    /// <summary>
+    /// Component for managing session players network objects.
+    /// </summary>
     [RequireComponent(typeof(NetworkObject))]
     public sealed class NetworkPlayerObject : NetworkBehaviour
     {
@@ -52,7 +55,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         /// <param name="newOwner">Session Player</param>
         [Server]
-        public void GiveOwnership(SessionPlayer newOwner)
+        public void GiveOwnershipPlayer(SessionPlayer newOwner)
         {
             GivingOwnership = true;
             if (newOwner != null && newOwner.IsValid)
@@ -75,6 +78,15 @@ namespace FishNet.Alven.SessionManagement
             GivingOwnership = false;
         }
 
+        /// <summary>
+        /// Removes ownership from all players.
+        /// </summary>
+        [Server]
+        public void RemoveOwnershipPlayer()
+        {
+            GiveOwnershipPlayer(null);
+        }
+        
         private void OnOwnerPlayerChanged(SessionPlayer prev, SessionPlayer next, bool asServer)
         {
             if (!NetworkManager.DoubleLogic(asServer) && (IsServer || next == null || next.IsLocalPlayer))

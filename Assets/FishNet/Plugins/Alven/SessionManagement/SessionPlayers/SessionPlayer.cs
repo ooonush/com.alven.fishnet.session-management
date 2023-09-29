@@ -10,7 +10,10 @@ namespace FishNet.Alven.SessionManagement
         internal const int UNSET_CLIENTID = -1;
         public static SessionPlayer Empty { get; private set; } = new SessionPlayer();
 
-        public readonly HashSet<NetworkPlayerObject> Objects = new HashSet<NetworkPlayerObject>();
+        /// <summary>
+        /// Objects owned by this Session Player. Available to this connection and server.
+        /// </summary>
+        public IReadOnlyCollection<NetworkPlayerObject> Objects => _objects;
         public NetworkManager NetworkManager { get; private set; }
         /// <summary>
         /// Player Id, available to clients.
@@ -76,6 +79,7 @@ namespace FishNet.Alven.SessionManagement
         internal int ConnectionId { get; private set; } = NetworkConnection.UNSET_CLIENTID_VALUE;
 
         private NetworkConnection _connection;
+        private readonly HashSet<NetworkPlayerObject> _objects = new HashSet<NetworkPlayerObject>();
         private readonly bool _asServer;
         private ClientSessionManager ClientSessionManager =>
             NetworkManager == null ? null : NetworkManager.GetClientSessionManager();
@@ -116,7 +120,7 @@ namespace FishNet.Alven.SessionManagement
             ConnectionId = NetworkConnection.UNSET_CLIENTID_VALUE;
             PlayerId = null;
             ClientPlayerId = UNSET_CLIENTID;
-            Objects.Clear();
+            _objects.Clear();
             _connection = null;
         }
 
@@ -136,7 +140,7 @@ namespace FishNet.Alven.SessionManagement
         {
             if (!IsValid) return;
 
-            if (Objects.Add(networkObject))
+            if (_objects.Add(networkObject))
             {
                 OnObjectAdded?.Invoke(networkObject);
             }
@@ -146,11 +150,11 @@ namespace FishNet.Alven.SessionManagement
         {
             if (!IsValid)
             {
-                Objects.Clear();
+                _objects.Clear();
                 return;
             }
 
-            if (Objects.Remove(networkObject))
+            if (_objects.Remove(networkObject))
             {
                 OnObjectRemoved?.Invoke(networkObject);
             }
