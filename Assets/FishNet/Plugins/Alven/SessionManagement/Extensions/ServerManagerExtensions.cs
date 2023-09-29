@@ -15,7 +15,20 @@ namespace FishNet.Alven.SessionManagement
         {
             playerObject.GivingOwnership = true;
             playerObject.Initialize(player);
+
+            NetworkSessionObject currentParent = playerObject;
+            foreach (NetworkSessionObject childSessionObject in currentParent.ChildNetworkSessionObjects)
+            {
+                childSessionObject.GivingOwnership = true;
+                childSessionObject.Initialize(player);
+            }
+            
             serverManager.Spawn(playerObject.NetworkObject, player.NetworkConnection, scene);
+            
+            foreach (NetworkSessionObject child in currentParent.ChildNetworkSessionObjects)
+            {
+                child.GivingOwnership = false;
+            }
             playerObject.GivingOwnership = false;
         }
 

@@ -33,6 +33,9 @@ namespace FishNet.Alven.SessionManagement
 
         internal bool GivingOwnership;
 
+        [SerializeField, HideInInspector]
+        internal NetworkSessionObject[] ChildNetworkSessionObjects;
+
         internal void Initialize(SessionPlayer ownerPlayer)
         {
             SetOwner(ownerPlayer);
@@ -86,7 +89,7 @@ namespace FishNet.Alven.SessionManagement
         {
             GiveOwnershipPlayer(null);
         }
-        
+
         private void OnOwnerPlayerChanged(SessionPlayer prev, SessionPlayer next, bool asServer)
         {
             if (!NetworkManager.DoubleLogic(asServer) && (IsServer || next == null || next.IsLocalPlayer))
@@ -134,6 +137,11 @@ namespace FishNet.Alven.SessionManagement
                 RemoveOwnership();
                 GivingOwnership = false;
             }
+        }
+
+        protected override void OnValidate()
+        {
+            ChildNetworkSessionObjects = GetComponentsInChildren<NetworkSessionObject>();
         }
     }
 }
