@@ -13,10 +13,10 @@ namespace FishNet.Alven.SessionManagement
         /// <summary>
         /// Objects owned by this Session Player. Available to this connection and server.
         /// </summary>
-        public IReadOnlyCollection<NetworkPlayerObject> Objects => _objects;
+        public IReadOnlyCollection<NetworkSessionObject> Objects => _objects;
         public NetworkManager NetworkManager { get; private set; }
         /// <summary>
-        /// Player Id, available to clients.
+        /// Available to server and clients.
         /// </summary>
         public int ClientPlayerId { get; private set; } = UNSET_CLIENTID;
         /// <summary>
@@ -69,17 +69,17 @@ namespace FishNet.Alven.SessionManagement
         /// <summary>
         /// Invokes when an NetworkPlayerObject is added for this player. Available to this connection and server.
         /// </summary>
-        public event Action<NetworkPlayerObject> OnObjectAdded;
+        public event Action<NetworkSessionObject> OnObjectAdded;
         /// <summary>
         /// Invokes when an NetworkPlayerObject is removed for this player. Available to this connection and server.
         /// </summary>
-        public event Action<NetworkPlayerObject> OnObjectRemoved;
+        public event Action<NetworkSessionObject> OnObjectRemoved;
 
         internal bool IsConnectedFirstTime { get; set; } = true;
         internal int ConnectionId { get; private set; } = NetworkConnection.UNSET_CLIENTID_VALUE;
 
         private NetworkConnection _connection;
-        private readonly HashSet<NetworkPlayerObject> _objects = new HashSet<NetworkPlayerObject>();
+        private readonly HashSet<NetworkSessionObject> _objects = new HashSet<NetworkSessionObject>();
         private readonly bool _asServer;
         private ClientSessionManager ClientSessionManager =>
             NetworkManager == null ? null : NetworkManager.GetClientSessionManager();
@@ -136,7 +136,7 @@ namespace FishNet.Alven.SessionManagement
             ConnectionId = connectionId;
         }
 
-        internal void AddObject(NetworkPlayerObject networkObject)
+        internal void AddObject(NetworkSessionObject networkObject)
         {
             if (!IsValid) return;
 
@@ -146,7 +146,7 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
-        internal void RemoveObject(NetworkPlayerObject networkObject)
+        internal void RemoveObject(NetworkSessionObject networkObject)
         {
             if (!IsValid)
             {

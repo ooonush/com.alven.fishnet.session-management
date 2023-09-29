@@ -25,7 +25,7 @@ namespace DefaultNamespace
         /// </summary>
         [Tooltip("Prefab to spawn for the session player.")]
         [SerializeField]
-        private NetworkPlayerObject _playerPrefab;
+        private NetworkSessionObject _playerPrefab;
         /// <summary>
         /// True to add player to the active scene when no global scenes are specified through the SceneManager.
         /// </summary>
@@ -50,11 +50,11 @@ namespace DefaultNamespace
         private int _nextSpawn;
         #endregion
 
-        private readonly Dictionary<SessionPlayer, NetworkPlayerObject> _playerObjects = new Dictionary<SessionPlayer, NetworkPlayerObject>();
+        private readonly Dictionary<SessionPlayer, NetworkSessionObject> _playerObjects = new Dictionary<SessionPlayer, NetworkSessionObject>();
         /// <summary>
         /// Spawned Players.
         /// </summary>
-        public IReadOnlyDictionary<SessionPlayer, NetworkPlayerObject> SpawnedPlayers => _playerObjects;
+        public IReadOnlyDictionary<SessionPlayer, NetworkSessionObject> SpawnedPlayers => _playerObjects;
 
         private void Start()
         {
@@ -93,7 +93,9 @@ namespace DefaultNamespace
             if (!asServer)
                 return;
             SessionPlayer player = conn.GetSessionPlayer();
-            if (_playerObjects.ContainsKey(player)) // PlayerObject for this session player is already spawned.
+            
+            // A player object can be created for a player if the player has previously connected and loaded the start scenes.
+            if (_playerObjects.ContainsKey(player))
             {
                 return;
             }
@@ -109,7 +111,7 @@ namespace DefaultNamespace
             SetSpawn(_playerPrefab.transform, out position, out rotation);
 
             NetworkObject nob = _networkManager.GetPooledInstantiated(_playerPrefab.NetworkObject, position, rotation, true);
-            var networkPlayerObject = nob.GetComponent<NetworkPlayerObject>();
+            var networkPlayerObject = nob.GetComponent<NetworkSessionObject>();
             _playerObjects.Add(player, networkPlayerObject);
             _networkManager.ServerManager.Spawn(networkPlayerObject, player);
 

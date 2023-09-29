@@ -4,10 +4,12 @@
     {
         /// <summary>
         /// The player has been connected first time.
+        /// Is called after the player has been authenticated.
         /// </summary>
         Connected,
         /// <summary>
         /// The player has been reconnected to this session.
+        /// Is called after the player has been authenticated.
         /// </summary>
         Reconnected,
         /// <summary>

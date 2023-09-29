@@ -46,11 +46,29 @@ namespace FishNet.Alven.SessionManagement
             if (!NetworkManager) return;
             NetworkManager.RegisterInstance(this);
             _clientManager.OnClientConnectionState += OnClientConnectionState;
+            _clientManager.OnRemoteConnectionState += OnRemoteConnectionState;
             _clientManager.OnAuthenticated += OnAuthenticated;
             
             _clientManager.RegisterBroadcast<PlayerConnectedBroadcast>(OnPlayerConnectedBroadcast);
             _clientManager.RegisterBroadcast<ConnectedPlayersBroadcast>(OnConnectedPlayersBroadcast);
             _clientManager.RegisterBroadcast<PlayerConnectionChangeBroadcast>(OnPlayerConnectionBroadcast);
+        }
+
+        private void OnRemoteConnectionState(RemoteConnectionStateArgs args)
+        {
+            if (args.ConnectionState == RemoteConnectionState.Started)
+            {
+                SessionPlayer player = _playersByConnectionIds[args.ConnectionId];
+
+                if (player.IsConnectedFirstTime)
+                {
+                    InvokeOnPlayerConnectionState(PlayerConnectionState.Connected, player.ClientPlayerId);
+                }
+                else
+                {
+                    InvokeOnPlayerConnectionState(PlayerConnectionState.Reconnected, player.ClientPlayerId);
+                }
+            }
         }
 
         private void OnDestroy()

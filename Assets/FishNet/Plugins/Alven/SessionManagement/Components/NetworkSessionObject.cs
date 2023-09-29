@@ -11,7 +11,7 @@ namespace FishNet.Alven.SessionManagement
     /// Component for managing session players network objects.
     /// </summary>
     [RequireComponent(typeof(NetworkObject))]
-    public sealed class NetworkPlayerObject : NetworkBehaviour
+    public sealed class NetworkSessionObject : NetworkBehaviour
     {
         [SyncVar(OnChange = nameof(OnOwnerPlayerChanged))]
         private SessionPlayer _ownerPlayer;

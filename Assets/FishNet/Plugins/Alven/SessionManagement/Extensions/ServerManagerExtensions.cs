@@ -11,7 +11,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         /// <param name="playerObject">NetworkPlayerObject instance to spawn.</param>
         /// <param name="player">SessionPlayer to give ownership to.</param>
-        public static void Spawn(this ServerManager serverManager, NetworkPlayerObject playerObject, SessionPlayer player, Scene scene = default)
+        public static void Spawn(this ServerManager serverManager, NetworkSessionObject playerObject, SessionPlayer player, Scene scene = default)
         {
             playerObject.GivingOwnership = true;
             playerObject.Initialize(player);
@@ -26,7 +26,7 @@ namespace FishNet.Alven.SessionManagement
         /// <param name="player">SessionPlayer to give ownership to.</param>
         public static void Spawn(this ServerManager serverManager, NetworkObject networkObject, SessionPlayer player, Scene scene = default)
         {
-            var networkPlayerObject = networkObject.GetComponent<NetworkPlayerObject>();
+            var networkPlayerObject = networkObject.GetComponent<NetworkSessionObject>();
             if (!networkPlayerObject)
             {
                 serverManager.NetworkManager.LogWarning("NetworkObject does not have a NetworkPlayerObject component.");

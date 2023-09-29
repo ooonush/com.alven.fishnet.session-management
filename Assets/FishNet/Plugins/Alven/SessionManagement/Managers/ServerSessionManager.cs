@@ -24,11 +24,9 @@ namespace FishNet.Alven.SessionManagement
         /// Connected Session Players by ClientPlayerIds.
         /// </summary>
         public IReadOnlyDictionary<int, SessionPlayer> Players => _playersByClientIds;
-        public bool IsSessionStarted { get; private set; }
-        /// <summary>
-        /// Called after the server starts session.
-        /// </summary>
-        public event Action OnSessionStarted;
+
+        [SerializeField] private bool _isSessionStarted;
+        public bool IsSessionStarted => _isSessionStarted;
         /// <summary>
         /// Called after the remote Session Player connection state changes.
         /// </summary>
@@ -72,8 +70,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public void StartSession()
         {
-            IsSessionStarted = true;
-            OnSessionStarted?.Invoke();
+            _isSessionStarted = true;
         }
 
         /// <summary>
@@ -82,7 +79,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public void EndSession()
         {
-            IsSessionStarted = false;
+            _isSessionStarted = false;
 
             foreach (SessionPlayer player in Players.Values.ToArray())
             {
@@ -108,7 +105,6 @@ namespace FishNet.Alven.SessionManagement
                 AddPlayer(player);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.Connected, false);
                 BroadcastPlayerConnected(player, false);
-                connection.OnLoadedStartScenes += OnLoadedStartScenes;
                 authenticator.InvokeAuthenticationResult(connection, true);
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.Connected);
                 return true;
@@ -119,7 +115,6 @@ namespace FishNet.Alven.SessionManagement
                 ReconnectPlayer(player, connection);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.Reconnected, false);
                 BroadcastPlayerConnected(player, true);
-                connection.OnLoadedStartScenes += OnLoadedStartScenes;
                 authenticator.InvokeAuthenticationResult(connection, true);
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.Reconnected);
                 return true;
@@ -128,13 +123,6 @@ namespace FishNet.Alven.SessionManagement
             NetworkManager.LogWarning("Player with id " + playerId + " is already connected. Authentication failed.");
             authenticator.InvokeAuthenticationResult(connection, false);
             return false;
-        }
-
-        private void OnLoadedStartScenes(NetworkConnection connection, bool asServer)
-        {
-            if (!asServer) return;
-
-            connection.OnLoadedStartScenes -= OnLoadedStartScenes;
         }
 
         private void BroadcastPlayerConnected(SessionPlayer player, bool isReconnected)
@@ -157,7 +145,7 @@ namespace FishNet.Alven.SessionManagement
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.PermanentlyDisconnected);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.PermanentlyDisconnected);
 
-                foreach (NetworkPlayerObject networkPlayerObject in player.Objects)
+                foreach (NetworkSessionObject networkPlayerObject in player.Objects)
                 {
                     if (networkPlayerObject.IsSpawned)
                     {
@@ -193,7 +181,6 @@ namespace FishNet.Alven.SessionManagement
         {
             if (connection.Authenticated && args.ConnectionState == RemoteConnectionState.Stopped)
             {
-                connection.OnLoadedStartScenes -= OnLoadedStartScenes;
                 DisconnectPlayer(GetPlayer(connection), !IsSessionStarted);
             }
         }
@@ -221,7 +208,6 @@ namespace FishNet.Alven.SessionManagement
             }
 
             _nextClientPlayerId = 1;
-            IsSessionStarted = false;
         }
 
         /// <summary>
