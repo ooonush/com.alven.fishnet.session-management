@@ -54,6 +54,8 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public IReadOnlyDictionary<SessionPlayer, NetworkSessionObject> SpawnedPlayers => _playerObjects;
 
+        private ServerSessionManager _serverSessionManager;
+
         private void Start()
         {
             InitializeOnce();
@@ -64,8 +66,7 @@ namespace FishNet.Alven.SessionManagement
             if (_networkManager != null)
             {
                 _networkManager.SceneManager.OnClientLoadedStartScenes -= SceneManager_OnClientLoadedStartScenes;
-                ServerSessionManager serverSessionManager = _networkManager.GetServerSessionManager();
-                serverSessionManager.OnRemotePlayerConnectionState -= ServerSessionManager_OnRemotePlayerConnectionState;
+                _serverSessionManager.OnRemotePlayerConnectionState -= ServerSessionManager_OnRemotePlayerConnectionState;
             }
         }
 
@@ -79,8 +80,8 @@ namespace FishNet.Alven.SessionManagement
             }
 
             _networkManager.SceneManager.OnClientLoadedStartScenes += SceneManager_OnClientLoadedStartScenes;
-            ServerSessionManager serverSessionManager = _networkManager.GetServerSessionManager();
-            serverSessionManager.OnRemotePlayerConnectionState += ServerSessionManager_OnRemotePlayerConnectionState;
+            _serverSessionManager = _networkManager.GetServerSessionManager();
+            _serverSessionManager.OnRemotePlayerConnectionState += ServerSessionManager_OnRemotePlayerConnectionState;
         }
 
         /// <summary>
