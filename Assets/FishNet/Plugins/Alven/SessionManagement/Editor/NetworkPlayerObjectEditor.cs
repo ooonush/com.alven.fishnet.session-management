@@ -3,10 +3,10 @@ using FishNet.Object;
 using UnityEditor;
 using UnityEditorInternal;
 
-namespace FishNet.Alven.SessionManagement.Editor
+namespace FishNet.Alven.SessionManagement
 {
     [CustomEditor(typeof(NetworkSessionObject))]
-    public class NetworkPlayerObjectEditor : UnityEditor.Editor
+    public class NetworkPlayerObjectEditor : Editor
     {
         public override void OnInspectorGUI()
         {

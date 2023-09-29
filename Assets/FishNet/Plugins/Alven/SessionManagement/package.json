@@ -1,0 +1,8 @@
+﻿{
+  "name": "com.alven.fishnet.sessionmanagement",
+  "displayName": "Session Management for FishNet",
+  "version": "0.0.1-pre.1",
+  "unity": "2020.3",
+  "author": "Alven (https://github.com/ooonush)",
+  "homepage": "https://github.com/ooonush/com.alven.fishnet.sessionmanagement"
+}

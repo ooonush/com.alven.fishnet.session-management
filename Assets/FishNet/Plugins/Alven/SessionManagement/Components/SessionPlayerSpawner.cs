@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using FishNet;
-using FishNet.Alven.SessionManagement;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Object;
 using UnityEngine;
 
-namespace DefaultNamespace
+namespace FishNet.Alven.SessionManagement
 {
     [AddComponentMenu("FishNet/Component/SessionPlayerSpawner")]
     public class SessionPlayerSpawner : MonoBehaviour
