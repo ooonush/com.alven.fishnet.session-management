@@ -1,5 +1,4 @@
-﻿using FishNet.Connection;
-using FishNet.Managing;
+﻿using FishNet.Managing;
 using FishNet.Serializing;
 
 namespace FishNet.Alven.SessionManagement
@@ -8,16 +7,16 @@ namespace FishNet.Alven.SessionManagement
     {
         public static void WriteSessionPlayer(this Writer writer, SessionPlayer player)
         {
-            writer.WriteNetworkConnection(player.NetworkConnection);
+            writer.WriteInt32(player.NetworkConnection.ClientId);
             writer.WriteInt32(player.ClientPlayerId);
         }
 
         public static SessionPlayer ReadSessionPlayer(this Reader reader)
         {
-            NetworkConnection connection = reader.ReadNetworkConnection();
-            int value = reader.ReadInt32();
+            int connectionId = reader.ReadInt32();
+            int clientPlayerId = reader.ReadInt32();
             
-            if (value == SessionPlayer.UNSET_CLIENTID)
+            if (clientPlayerId == SessionPlayer.UNSET_CLIENTID)
             {
                 return SessionPlayer.Empty;
             }
@@ -28,7 +27,7 @@ namespace FishNet.Alven.SessionManagement
                 if (networkManager.IsServer)
                 {
                     SessionPlayer result;
-                    if (networkManager.GetServerSessionManager().Players.TryGetValue(value, out result))
+                    if (networkManager.GetServerSessionManager().Players.TryGetValue(clientPlayerId, out result))
                     {
                         return result;
                     }
@@ -36,7 +35,7 @@ namespace FishNet.Alven.SessionManagement
                     else if (networkManager.IsClient)
                     {
                         //If found in client collection then return.
-                        if (networkManager.GetClientSessionManager().Players.TryGetValue(value, out result))
+                        if (networkManager.GetClientSessionManager().Players.TryGetValue(clientPlayerId, out result))
                             return result;
                         /* Otherwise make a new instance.
                          * We do not know if this is for the server or client so
@@ -44,13 +43,13 @@ namespace FishNet.Alven.SessionManagement
                          * without being in server/client side collection. */
                         else
                         {
-                            return new SessionPlayer(networkManager, value, connection);
+                            return new SessionPlayer(networkManager, clientPlayerId, connectionId);
                         }
                     }
                     //Only server and not found.
                     else
                     {
-                        networkManager.LogWarning($"Unable to find Session Player for read ClientPlayerId " + value + " An empty connection will be returned.");
+                        networkManager.LogWarning($"Unable to find Session Player for read ClientPlayerId " + clientPlayerId + " An empty connection will be returned.");
                         return SessionPlayer.Empty;
                     }
                 }
@@ -58,17 +57,18 @@ namespace FishNet.Alven.SessionManagement
                 else
                 {
                     //If value is self then return self.
-                    if (value == networkManager.GetClientSessionManager().Player.ClientPlayerId)
+                    if (clientPlayerId == networkManager.GetClientSessionManager().Player.ClientPlayerId)
                         return networkManager.GetClientSessionManager().Player;
                     //Try client side dictionary.
-                    else if (networkManager.GetClientSessionManager().Players.TryGetValue(value, out SessionPlayer result))
+                    else if (networkManager.GetClientSessionManager().Players
+                             .TryGetValue(clientPlayerId, out SessionPlayer result))
                         return result;
                     /* Otherwise make a new instance.
                      * We do not know if this is for the server or client so
                      * initialize it either way. Connections rarely come through
                      * without being in server/client side collection. */
                     else
-                        return new SessionPlayer(networkManager, value, connection);
+                        return new SessionPlayer(networkManager, clientPlayerId, connectionId);
                 }
             }
         }
