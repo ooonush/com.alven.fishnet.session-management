@@ -116,6 +116,7 @@ namespace FishNet.Alven.SessionManagement
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.Reconnected, false);
                 BroadcastPlayerConnected(player, true);
                 authenticator.InvokeAuthenticationResult(connection, true);
+                connection.OnLoadedStartScenes += OnConnectionLoadedStartScenes;
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.Reconnected);
                 return true;
             }
@@ -123,6 +124,18 @@ namespace FishNet.Alven.SessionManagement
             NetworkManager.LogWarning("Player with id " + playerId + " is already connected. Authentication failed.");
             authenticator.InvokeAuthenticationResult(connection, false);
             return false;
+        }
+
+        private void OnConnectionLoadedStartScenes(NetworkConnection connection, bool asServer)
+        {
+            if (!asServer) return;
+
+            foreach (NetworkSessionObject sessionObject in connection.GetSessionPlayer().Objects)
+            {
+                sessionObject.GivingOwnership = true;
+                sessionObject.GiveOwnership(connection);
+                sessionObject.GivingOwnership = false;
+            }
         }
 
         private void BroadcastPlayerConnected(SessionPlayer player, bool isReconnected)
@@ -145,7 +158,7 @@ namespace FishNet.Alven.SessionManagement
                 InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.PermanentlyDisconnected);
                 BroadcastPlayerConnectionChange(player, PlayerConnectionState.PermanentlyDisconnected);
 
-                foreach (NetworkSessionObject networkPlayerObject in player.Objects)
+                foreach (NetworkSessionObject networkPlayerObject in player.Objects.ToArray())
                 {
                     if (networkPlayerObject.IsSpawned)
                     {
@@ -181,6 +194,7 @@ namespace FishNet.Alven.SessionManagement
         {
             if (connection.Authenticated && args.ConnectionState == RemoteConnectionState.Stopped)
             {
+                connection.OnLoadedStartScenes -= OnConnectionLoadedStartScenes;
                 DisconnectPlayer(GetPlayer(connection), !IsSessionStarted);
             }
         }
