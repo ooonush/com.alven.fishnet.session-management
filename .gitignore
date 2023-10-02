@@ -1,0 +1,4 @@
+*
+!Assets/FishNet/Plugins/Alven/SessionManagement/**
+!Assets/FishNet/Plugins/Alven/SessionManagement.meta
+!.gitignore
