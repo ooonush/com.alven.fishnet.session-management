@@ -77,6 +77,7 @@ namespace FishNet.Alven.SessionManagement
             NetworkManager.UnregisterInstance<ClientSessionManager>();
 
             _clientManager.OnClientConnectionState -= OnClientConnectionState;
+            _clientManager.OnRemoteConnectionState -= OnRemoteConnectionState;
             _clientManager.OnAuthenticated -= OnAuthenticated;
 
             _clientManager.UnregisterBroadcast<PlayerConnectedBroadcast>(OnPlayerConnectedBroadcast);
@@ -162,7 +163,7 @@ namespace FishNet.Alven.SessionManagement
                     // InvokeOnPlayerConnectionState will be called from OnRemoteConnectionState.
                     break;
                 case PlayerConnectionState.Reconnected:
-                    ReconnectPlayer(_playersByConnectionIds[clientPlayerId], args.ConnectionId);
+                    ReconnectPlayer(_players[clientPlayerId], args.ConnectionId);
                     // InvokeOnPlayerConnectionState will be called from OnRemoteConnectionState.
                     break;
                 case PlayerConnectionState.TemporarilyDisconnected:
