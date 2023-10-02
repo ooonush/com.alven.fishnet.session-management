@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using FishNet.Connection;
 using FishNet.Managing;
+using FishNet.Serializing.Helping;
 
 namespace FishNet.Alven.SessionManagement
 {
+    [CodegenExclude]
     public sealed class SessionPlayer
     {
         internal const int UNSET_CLIENTID = -1;
