@@ -97,7 +97,7 @@ public static class SessionPlayerSerializer
 ## ServerSessionManager.
 
 `ServerSessionManager`, oddly enough, is responsible for the server side of Session Management. This is similar to `ServerManager`.
-You can get the `ClientSessionManager` by using `NetworkManager.GetServerSessionManager()`.
+You can get the `ServerSessionManager` by using `NetworkManager.GetServerSessionManager()`.
 
 An important detail is that by default, `ServerSessionManager` does not store information about previously connected players.
 That is, when reconnecting, players will connect as new players.
