@@ -44,7 +44,7 @@ You can see an example use case in the `BasicSessionAuthenticator.cs` script.
 There is also support for `Unity Authentication` in this package.
 To use it, you need to install [Unity Authentication](https://unity.com/products/authentication) package and use `UnitySessionAuthenticator` component.
 
-## Components Setup.
+## Components Setup
 
 For the session manager to work, you must add several components:
 1. `SessionAuthenticator` you want to use. Remember to assign it to the `Authenticator` field in the `ServerManager` component.
@@ -67,10 +67,10 @@ As you can see, the `PlayerId` string is only available on the server, which ens
 Clients cannot recognize the PlayerId of other players, and so that they can still distinguish between players, there is a ClientPlayerId.
 This is a unique player identifier that is available to both server and clients.
 
-### FishNet technical limitations.
+### Unity technical limitations.
 You may need to synchronize SessionPlayer over the network. For example, send it using Rpc, or use it in [SyncVar].
 SessionManagement supports a custom serializer that allows you to do this.
-But unfortunately, FishNet does not yet know how to find custom serializers in another Assembly.
+But unfortunately, due to Unity limitations, FishNet can't find custom serializers in other Assemblies.
 
 You get similar errors in the console:
 ![image](https://github.com/ooonush/com.alven.fishnet.sessionmanagement/assets/72870405/bb35c321-d9a9-4a43-bfdd-9e9b541cf256)
