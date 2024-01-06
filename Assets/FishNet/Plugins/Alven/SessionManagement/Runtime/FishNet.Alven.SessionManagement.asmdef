@@ -1,0 +1,30 @@
+{
+    "name": "FishNet.Alven.SessionManagement",
+    "rootNamespace": "FishNet.Alven.SessionManagement",
+    "references": [
+        "GUID:7c88a4a7926ee5145ad2dfa06f454c67",
+        "GUID:5540e30183c82e84b954c033c388e06c",
+        "GUID:fe25561d224ed4743af4c60938a59d0b",
+        "GUID:894a6cc6ed5cd2645bb542978cbed6a9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.veriorpies.parrelsync",
+            "expression": "1.2",
+            "define": "PARRELSYNC"
+        },
+        {
+            "name": "com.unity.services.authentication",
+            "expression": "",
+            "define": "UNITY_SERVICES_AUTHENTICATION"
+        }
+    ],
+    "noEngineReferences": false
+}

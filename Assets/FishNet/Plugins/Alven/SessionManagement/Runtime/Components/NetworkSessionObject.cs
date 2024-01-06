@@ -57,37 +57,40 @@ namespace FishNet.Alven.SessionManagement
         /// Gives ownership to newOwner.
         /// </summary>
         /// <param name="newOwner">Session Player</param>
+        /// <param name="rebuildObservers">
+        /// If True, the object will be transferred to the owner immediately.
+        /// If player is not its observer, the observers are rebuilt.
+        /// False if there is no need to rebuild the observers.
+        /// The object will be transferred to the player's possession as soon as the player becomes an observer.</param>
         [Server]
-        public void GiveOwnershipPlayer(SessionPlayer newOwner)
+        public void GiveOwnershipPlayer(SessionPlayer newOwner, bool rebuildObservers = true)
         {
-            GivingOwnership = true;
-            if (newOwner != null && newOwner.IsValid)
+            if (rebuildObservers || NetworkObject.Observers.Contains(newOwner?.NetworkConnection))
             {
-                _ownerPlayer = newOwner;
-                if (newOwner.IsConnected)
+                GivingOwnership = true;
+                if (newOwner != null && newOwner.IsValid)
                 {
-                    GiveOwnership(newOwner.NetworkConnection);
+                    _ownerPlayer = newOwner;
+                    if (newOwner.IsConnected)
+                    {
+                        GiveOwnership(newOwner.NetworkConnection);
+                    }
+                    else
+                    {
+                        RemoveOwnership();
+                    }
                 }
                 else
                 {
-                    RemoveOwnership();
+                    _ownerPlayer = null;
                 }
+
+                GivingOwnership = false;
             }
             else
             {
-                _ownerPlayer = null;
+                SetOwner(newOwner);
             }
-
-            GivingOwnership = false;
-        }
-
-        /// <summary>
-        /// Removes ownership from all players.
-        /// </summary>
-        [Server]
-        public void RemoveOwnershipPlayer()
-        {
-            GiveOwnershipPlayer(null);
         }
 
         private void OnOwnerPlayerChanged(SessionPlayer prev, SessionPlayer next, bool asServer)
@@ -114,7 +117,9 @@ namespace FishNet.Alven.SessionManagement
 
         public override void OnSpawnServer(NetworkConnection connection)
         {
-            if (!GivingOwnership && OwnerPlayer != null && connection == OwnerPlayer.NetworkConnection && OwnerPlayer.IsConnected && Owner != connection)
+            if (GivingOwnership) return;
+            
+            if (connection == OwnerPlayer?.NetworkConnection && Owner != connection)
             {
                 GivingOwnership = true;
                 GiveOwnership(connection);
@@ -141,6 +146,8 @@ namespace FishNet.Alven.SessionManagement
 
         protected override void OnValidate()
         {
+            base.OnValidate();
+            
             ChildNetworkSessionObjects = GetComponentsInChildren<NetworkSessionObject>();
         }
     }

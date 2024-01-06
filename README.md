@@ -7,8 +7,6 @@ and other data so that the player can reconnect to that session and continue fro
 Currently, FishNet does not have a built-in feature that allows you to do this, so this asset may look
 unfamiliar. But I've tried to keep it as simple as possible and make it look like it's a native feature.
 
-**_The asset is in development and is still being tested for bugs, so it is not recommended to use it in production._**
-
 But you can participate in testing and report bugs. You can also suggest ideas to improve the documentation and add new features to the asset.
 
 If you have further questions, come find me as `ooonush` in the [FirstGearGames Discord](https://discord.gg/Ta9HgDh4Hj)!
@@ -29,17 +27,22 @@ The server checks this PlayerId for correctness and matches it with the PlayerId
 If such a PlayerId is found, the player reconnects and the server transfers the previously owned NetworkObjects to the player.
 Otherwise, the player is connected as a new player.
 
-This asset already has an Authenticator that generates a PlayerId for the player every time the game starts (can be improved later).
-In order to use it, you must add a BasicSessionAuthenticator component to the scene and assign it to the
+This asset already has an authenticator that generates a PlayerId for the player.
+In order to use it, you must add a `BasicSessionAuthenticator` component to the scene and assign it to the
 [Authenticator](https://fish-networking.gitbook.io/docs/manual/components/authenticator) field in the
 [ServerManager](https://fish-networking.gitbook.io/docs/manual/components/managers/server-manager) component.
 
 The `BasicSessionAuthenticator` may not suit you and you can implement your own custom authentication.
-To do this you need to inherit the SessionAuthenticator abstract class.
+To do this you need to inherit the `SessionAuthenticator` abstract class.
 The authentication happens in the same way as in the 
 [Authenticator](https://fish-networking.gitbook.io/docs/manual/components/authenticator) that is in FishNet.
 The main difference is that instead of the `OnAuthenticationResult` event, you have to call the `PassAuthentication` or `FailAuthentication` methods depending on whether the authentication has passed.
 You can see an example use case in the `BasicSessionAuthenticator.cs` script.
+
+### Unity Authentication Support
+
+There is also support for `Unity Authentication` in this package.
+To use it, you need to install [Unity Authentication](https://unity.com/products/authentication) package and use `UnitySessionAuthenticator` component.
 
 ## Components Setup.
 
@@ -74,7 +77,7 @@ That is, when reconnecting, players will connect as new players.
 
 In order to change this, you must call the `StartSession()` method.
 And when you no longer need to store previously connected players, you can call the `EndSession()` method.
-You can also change the IsSessionStarted value in the inspector.
+You can also change the `IsSessionStarted` value in the inspector.
 
 The OnRemotePlayerConnectionState event is available in this class. It is called when the player states are changed:
 - **Connected** - The player has been connected first time. Is called after the player has been authenticated.

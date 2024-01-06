@@ -184,9 +184,27 @@ namespace FishNet.Alven.SessionManagement
 
         private void OnServerConnectionState(ServerConnectionStateArgs args)
         {
+            switch (args.ConnectionState)
+            {
+                case LocalConnectionState.Stopped:
+                    Reset();
+                    break;
+                case LocalConnectionState.Starting:
+                    break;
+                case LocalConnectionState.Started:
+                    if (_serverManager.GetAuthenticator() is not SessionAuthenticator)
+                    {
+                        NetworkManager.LogError("ServerManager Authenticator is not a SessionAuthenticator.");
+                    }
+                    break;
+                case LocalConnectionState.Stopping:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
             if (args.ConnectionState == LocalConnectionState.Stopped)
             {
-                Reset();
             }
         }
 
