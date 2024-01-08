@@ -3,7 +3,7 @@ using FishNet.Managing;
 
 namespace FishNet.Alven.SessionManagement
 {
-    internal static class NetworkManagerSessionExtensions
+    public static class NetworkManagerSessionExtensions
     {
         public static ServerSessionManager GetServerSessionManager(this NetworkManager networkManager)
         {
