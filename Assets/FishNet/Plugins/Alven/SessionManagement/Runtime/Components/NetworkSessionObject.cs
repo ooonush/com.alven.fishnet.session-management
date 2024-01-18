@@ -13,12 +13,16 @@ namespace FishNet.Alven.SessionManagement
     [RequireComponent(typeof(NetworkObject))]
     public sealed class NetworkSessionObject : NetworkBehaviour
     {
-        [SyncVar(OnChange = nameof(OnOwnerPlayerChanged))]
-        private SessionPlayer _ownerPlayer;
+        private readonly SyncVar<SessionPlayer> _ownerPlayer = new SyncVar<SessionPlayer>();
         /// <summary>
         /// Owner SessionPlayer of this object.
         /// </summary>
-        public SessionPlayer OwnerPlayer => IsOffline ? null : _ownerPlayer;
+        public SessionPlayer OwnerPlayer
+        {
+            get => IsOffline ? null : _ownerPlayer.Value;
+            set => _ownerPlayer.Value = value;
+        }
+
         /// <summary>
         /// The local SessionPlayer of the client calling this method.
         /// </summary>
@@ -36,6 +40,16 @@ namespace FishNet.Alven.SessionManagement
         [SerializeField, HideInInspector]
         internal NetworkSessionObject[] ChildNetworkSessionObjects;
 
+        private void Awake()
+        {
+            _ownerPlayer.OnChange += OnOwnerPlayerChanged;
+        }
+
+        private void OnDestroy()
+        {
+            _ownerPlayer.OnChange -= OnOwnerPlayerChanged;
+        }
+
         internal void Initialize(SessionPlayer ownerPlayer)
         {
             SetOwner(ownerPlayer);
@@ -45,11 +59,11 @@ namespace FishNet.Alven.SessionManagement
         {
             if (newOwner != null && newOwner.IsValid)
             {
-                _ownerPlayer = newOwner;
+                OwnerPlayer = newOwner;
             }
             else
             {
-                _ownerPlayer = null;
+                OwnerPlayer = null;
             }
         }
 
@@ -70,7 +84,7 @@ namespace FishNet.Alven.SessionManagement
                 GivingOwnership = true;
                 if (newOwner != null && newOwner.IsValid)
                 {
-                    _ownerPlayer = newOwner;
+                    OwnerPlayer = newOwner;
                     if (newOwner.IsConnected)
                     {
                         GiveOwnership(newOwner.NetworkConnection);
@@ -82,7 +96,7 @@ namespace FishNet.Alven.SessionManagement
                 }
                 else
                 {
-                    _ownerPlayer = null;
+                    OwnerPlayer = null;
                 }
 
                 GivingOwnership = false;
@@ -95,7 +109,7 @@ namespace FishNet.Alven.SessionManagement
 
         private void OnOwnerPlayerChanged(SessionPlayer prev, SessionPlayer next, bool asServer)
         {
-            if (!NetworkManager.DoubleLogic(asServer) && (IsServer || next == null || next.IsLocalPlayer))
+            if (!NetworkManager.DoubleLogic(asServer) && (IsServerInitialized || next == null || next.IsLocalPlayer))
             {
                 if (prev != null && prev.IsValid)
                 {
@@ -131,7 +145,7 @@ namespace FishNet.Alven.SessionManagement
         {
             if (GivingOwnership) return;
             
-            _ownerPlayer = null;
+            OwnerPlayer = null;
         }
 
         public override void OnDespawnServer(NetworkConnection connection)

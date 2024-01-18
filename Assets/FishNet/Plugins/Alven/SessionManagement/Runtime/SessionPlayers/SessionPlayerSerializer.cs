@@ -24,7 +24,7 @@ namespace FishNet.Alven.SessionManagement
             {
                 //Prefer server.
                 NetworkManager networkManager = reader.NetworkManager;
-                if (networkManager.IsServer)
+                if (networkManager.IsServerStarted)
                 {
                     SessionPlayer result;
                     if (networkManager.GetServerSessionManager().Players.TryGetValue(clientPlayerId, out result))
@@ -32,7 +32,7 @@ namespace FishNet.Alven.SessionManagement
                         return result;
                     }
                     //If also client then try client side data.
-                    else if (networkManager.IsClient)
+                    else if (networkManager.IsClientStarted)
                     {
                         //If found in client collection then return.
                         if (networkManager.GetClientSessionManager().Players.TryGetValue(clientPlayerId, out result))

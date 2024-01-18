@@ -87,7 +87,7 @@ namespace FishNet.Alven.SessionManagement
         /// <summary>
         /// Called before ClientManager.OnAuthenticated.
         /// </summary>
-        private void OnPlayerConnectedBroadcast(PlayerConnectedBroadcast broadcast)
+        private void OnPlayerConnectedBroadcast(PlayerConnectedBroadcast broadcast, Channel channel)
         {
             Player = broadcast.Player;
             Player.IsConnectedFirstTime = !broadcast.IsReconnected;
@@ -125,7 +125,7 @@ namespace FishNet.Alven.SessionManagement
             ClearPlayers();
         }
 
-        private void OnConnectedPlayersBroadcast(ConnectedPlayersBroadcast broadcast)
+        private void OnConnectedPlayersBroadcast(ConnectedPlayersBroadcast broadcast, Channel channel)
         {
             ClearPlayers();
 
@@ -147,7 +147,7 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
-        private void OnPlayerConnectionBroadcast(PlayerConnectionChangeBroadcast args)
+        private void OnPlayerConnectionBroadcast(PlayerConnectionChangeBroadcast args, Channel channel)
         {
             int clientPlayerId = args.ClientPlayerId;
             PlayerConnectionState state = args.State;

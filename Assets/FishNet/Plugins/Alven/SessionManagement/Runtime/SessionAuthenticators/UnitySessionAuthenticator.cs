@@ -54,7 +54,7 @@ namespace FishNet.Alven.SessionManagement
             NetworkManager.Log($"Player {AuthenticationService.Instance.Profile} with PlayerId {playerId} signed in" );
         }
 
-        private void OnPlayerIdBroadcast(NetworkConnection connection, PlayerIdBroadcast broadcast)
+        private void OnPlayerIdBroadcast(NetworkConnection connection, PlayerIdBroadcast broadcast, Channel channel)
         {
             PassAuthentication(connection, broadcast.PlayerId);
         }
