@@ -97,6 +97,12 @@ namespace FishNet.Alven.SessionManagement
 
         internal bool SetupPlayerConnection(SessionAuthenticator authenticator, string playerId, NetworkConnection connection)
         {
+            if (string.IsNullOrEmpty(playerId))
+            {
+                Debug.LogWarning($"PlayerId for connection {connection.ClientId} is null. Authentication failed.");
+                authenticator.InvokeAuthenticationResult(connection, false);
+                return false;
+            }
             if (!_players.TryGetValue(playerId, out SessionPlayer player))
             {
                 player = new SessionPlayer(NetworkManager, _nextClientPlayerId, connection, playerId);
