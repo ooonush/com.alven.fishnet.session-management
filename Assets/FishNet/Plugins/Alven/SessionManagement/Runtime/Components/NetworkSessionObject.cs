@@ -164,7 +164,7 @@ namespace FishNet.Alven.SessionManagement
         {
             base.OnValidate();
             
-            ChildNetworkSessionObjects = GetComponentsInChildren<NetworkSessionObject>();
+            ChildNetworkSessionObjects = GetComponentsInChildren<NetworkSessionObject>(true);
         }
     }
 }
