@@ -35,8 +35,10 @@ namespace FishNet.Alven.SessionManagement
             }
             else
             {
+                playerObject.GivingOwnership = true;
                 playerObject.Initialize(player);
                 serverManager.Spawn(playerObject.NetworkObject, scene: scene);
+                playerObject.GivingOwnership = false;
             }
         }
 
