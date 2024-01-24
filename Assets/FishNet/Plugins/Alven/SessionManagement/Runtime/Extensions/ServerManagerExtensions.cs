@@ -12,25 +12,32 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         /// <param name="playerObject">NetworkPlayerObject instance to spawn.</param>
         /// <param name="player">SessionPlayer to give ownership to.</param>
-        public static void Spawn(this ServerManager serverManager, NetworkSessionObject playerObject, SessionPlayer player, Scene scene = default)
+        public static void Spawn(this ServerManager serverManager, NetworkSessionObject playerObject, SessionPlayer player, Scene scene = default, bool rebuildObservers = true)
         {
-            playerObject.GivingOwnership = true;
-            playerObject.Initialize(player);
+            if (rebuildObservers || playerObject.Observers.Contains(player.NetworkConnection))
+            {
+                playerObject.GivingOwnership = true;
+                playerObject.Initialize(player);
 
-            NetworkSessionObject currentParent = playerObject;
-            foreach (NetworkSessionObject childSessionObject in currentParent.ChildNetworkSessionObjects)
-            {
-                childSessionObject.GivingOwnership = true;
-                childSessionObject.Initialize(player);
-            }
+                foreach (NetworkSessionObject childSessionObject in playerObject.ChildNetworkSessionObjects)
+                {
+                    childSessionObject.GivingOwnership = true;
+                    childSessionObject.Initialize(player);
+                }
             
-            serverManager.Spawn(playerObject.NetworkObject, player.NetworkConnection, scene);
+                serverManager.Spawn(playerObject.NetworkObject, player.NetworkConnection, scene);
             
-            foreach (NetworkSessionObject child in currentParent.ChildNetworkSessionObjects)
-            {
-                child.GivingOwnership = false;
+                foreach (NetworkSessionObject child in playerObject.ChildNetworkSessionObjects)
+                {
+                    child.GivingOwnership = false;
+                }
+                playerObject.GivingOwnership = false;
             }
-            playerObject.GivingOwnership = false;
+            else
+            {
+                playerObject.Initialize(player);
+                serverManager.Spawn(playerObject.NetworkObject, scene: scene);
+            }
         }
 
         /// <summary>
@@ -38,7 +45,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         /// <param name="networkObject">NetworkObject instance to spawn.</param>
         /// <param name="player">SessionPlayer to give ownership to.</param>
-        public static void Spawn(this ServerManager serverManager, NetworkObject networkObject, SessionPlayer player, Scene scene = default)
+        public static void Spawn(this ServerManager serverManager, NetworkObject networkObject, SessionPlayer player, Scene scene = default, bool rebuildObservers = true)
         {
             var networkPlayerObject = networkObject.GetComponent<NetworkSessionObject>();
             if (!networkPlayerObject)
@@ -47,7 +54,7 @@ namespace FishNet.Alven.SessionManagement
             }
             else
             {
-                Spawn(serverManager, networkPlayerObject, player, scene);
+                Spawn(serverManager, networkPlayerObject, player, scene, rebuildObservers);
             }
         }
     }
