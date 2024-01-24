@@ -14,32 +14,33 @@ namespace FishNet.Alven.SessionManagement
         /// <param name="player">SessionPlayer to give ownership to.</param>
         public static void Spawn(this ServerManager serverManager, NetworkSessionObject playerObject, SessionPlayer player, Scene scene = default, bool rebuildObservers = true)
         {
-            if (rebuildObservers || playerObject.Observers.Contains(player.NetworkConnection))
+            playerObject.GivingOwnership = true;
+            playerObject.IsSpawning = true;
+            playerObject.Initialize(player);
+            
+            foreach (NetworkSessionObject childSessionObject in playerObject.ChildNetworkSessionObjects)
             {
-                playerObject.GivingOwnership = true;
-                playerObject.Initialize(player);
-
-                foreach (NetworkSessionObject childSessionObject in playerObject.ChildNetworkSessionObjects)
-                {
-                    childSessionObject.GivingOwnership = true;
-                    childSessionObject.Initialize(player);
-                }
+                childSessionObject.GivingOwnership = true;
+                childSessionObject.IsSpawning = true;
+                childSessionObject.Initialize(player);
+            }
             
+            if (rebuildObservers)
+            {
                 serverManager.Spawn(playerObject.NetworkObject, player.NetworkConnection, scene);
-            
-                foreach (NetworkSessionObject child in playerObject.ChildNetworkSessionObjects)
-                {
-                    child.GivingOwnership = false;
-                }
-                playerObject.GivingOwnership = false;
             }
             else
             {
-                playerObject.GivingOwnership = true;
-                playerObject.Initialize(player);
                 serverManager.Spawn(playerObject.NetworkObject, scene: scene);
-                playerObject.GivingOwnership = false;
             }
+            
+            foreach (NetworkSessionObject child in playerObject.ChildNetworkSessionObjects)
+            {
+                child.GivingOwnership = false;
+                child.IsSpawning = false;
+            }
+            playerObject.IsSpawning = false;
+            playerObject.GivingOwnership = false;
         }
 
         /// <summary>

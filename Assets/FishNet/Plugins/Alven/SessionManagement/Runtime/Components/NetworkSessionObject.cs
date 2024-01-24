@@ -36,6 +36,7 @@ namespace FishNet.Alven.SessionManagement
         public event Action<SessionPlayer, SessionPlayer, bool> OnOwnershipPlayer;
 
         internal bool GivingOwnership;
+        internal bool IsSpawning;
 
         [SerializeField, HideInInspector]
         internal NetworkSessionObject[] ChildNetworkSessionObjects;
@@ -131,7 +132,7 @@ namespace FishNet.Alven.SessionManagement
 
         public override void OnSpawnServer(NetworkConnection connection)
         {
-            if (GivingOwnership) return;
+            if (!IsSpawning && GivingOwnership) return;
             
             if (connection == OwnerPlayer?.NetworkConnection && Owner != connection)
             {
@@ -159,7 +160,7 @@ namespace FishNet.Alven.SessionManagement
                 GivingOwnership = false;
             }
         }
-        
+
         protected override void OnValidate()
         {
             base.OnValidate();
