@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Managing.Server;
@@ -25,8 +24,11 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public IReadOnlyDictionary<int, SessionPlayer> Players => _playersByClientIds;
 
-        [SerializeField] private bool _isSessionStarted;
-        public bool IsSessionStarted => _isSessionStarted;
+        [SerializeField] private bool _initiallySessionStarted;
+        public bool IsSessionStarted { get; private set; }
+        public event Action OnSessionStarted;
+        public event Action OnSessionEnded;
+
         /// <summary>
         /// Called after the remote Session Player connection state changes.
         /// </summary>
@@ -35,21 +37,18 @@ namespace FishNet.Alven.SessionManagement
         private readonly Dictionary<string, SessionPlayer> _players = new Dictionary<string, SessionPlayer>();
         private readonly Dictionary<int, SessionPlayer> _playersByClientIds = new Dictionary<int, SessionPlayer>();
         private readonly Dictionary<int, SessionPlayer> _playersByConnectionIds = new Dictionary<int, SessionPlayer>();
-        private ServerManager _serverManager;
 
+        private ServerManager _serverManager;
         private int _nextClientPlayerId;
-        internal bool ShareIds;
+        private bool ShareIds => _serverManager.ShareIds;
 
         private void Awake()
         {
             _serverManager = GetComponent<ServerManager>();
             
             if (!NetworkManager) return;
-            Type type = _serverManager.GetType();
-            FieldInfo fieldInfo = type.GetField("_shareIds", BindingFlags.NonPublic | BindingFlags.Instance);
-            ShareIds = (bool)fieldInfo!.GetValue(_serverManager);
-            NetworkManager.RegisterInstance(this);
             
+            NetworkManager.RegisterInstance(this);
             _serverManager.OnRemoteConnectionState += OnRemoteConnectionState;
             _serverManager.OnServerConnectionState += OnServerConnectionState;
         }
@@ -70,7 +69,12 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public void StartSession()
         {
-            _isSessionStarted = true;
+            if (IsSessionStarted)
+            {
+                return;
+            }
+            IsSessionStarted = true;
+            OnSessionStarted?.Invoke();
         }
 
         /// <summary>
@@ -79,8 +83,12 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public void EndSession()
         {
-            _isSessionStarted = false;
-
+            if (!IsSessionStarted)
+            {
+                return;
+            }
+            IsSessionStarted = false;
+            
             foreach (SessionPlayer player in Players.Values.ToArray())
             {
                 if (!player.IsConnected)
@@ -88,6 +96,8 @@ namespace FishNet.Alven.SessionManagement
                     DisconnectPlayer(player, true);
                 }
             }
+            
+            OnSessionEnded?.Invoke();
         }
 
         internal SessionPlayer GetPlayer(NetworkConnection connection)
@@ -201,6 +211,10 @@ namespace FishNet.Alven.SessionManagement
                     if (_serverManager.GetAuthenticator() is not SessionAuthenticator)
                     {
                         NetworkManager.LogError("ServerManager Authenticator is not a SessionAuthenticator.");
+                    }
+                    if (_initiallySessionStarted)
+                    {
+                        StartSession();
                     }
                     break;
                 case LocalConnectionState.Stopping:
