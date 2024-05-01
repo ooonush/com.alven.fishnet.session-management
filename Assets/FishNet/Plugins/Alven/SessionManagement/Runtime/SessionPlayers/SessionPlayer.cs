@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using FishNet.CodeGenerating;
 using FishNet.Connection;
 using FishNet.Managing;
-using FishNet.CodeGenerating;
 
 namespace FishNet.Alven.SessionManagement
 {
-    [ExcludeSerialization]
     [UseGlobalCustomSerializer]
     public sealed class SessionPlayer
     {
