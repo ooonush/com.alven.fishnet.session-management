@@ -1,8 +1,10 @@
 ﻿using FishNet.Managing;
 using FishNet.Serializing;
+using FishNet.CodeGenerating;
 
 namespace FishNet.Alven.SessionManagement
 {
+    [UseGlobalCustomSerializer]
     public static class SessionPlayerSerializer
     {
         public static void WriteSessionPlayer(this Writer writer, SessionPlayer player)
