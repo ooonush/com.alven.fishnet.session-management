@@ -16,7 +16,11 @@ If you have further questions, come find me as `ooonush` in the [FirstGearGames 
 Asset is completely free and created entirely by myself.
 **If you want to support me, you can do so with [Donation Alerts](https://www.donationalerts.com/r/ooonush).**
 
-## Player Identification.
+## Requirements
+
+- FishNet 4.1.3 or newer.
+
+## Player Identification
 
 In FishNet, when a player reconnects, a new NetworkConnection with a different ClientId is created for that player.
 This means that the server has no way of knowing whether a new player is connecting or reconnecting a previously connected player.
@@ -67,7 +71,7 @@ As you can see, the `PlayerId` string is only available on the server, which ens
 Clients cannot recognize the PlayerId of other players, and so that they can still distinguish between players, there is a ClientPlayerId.
 This is a unique player identifier that is available to both server and clients.
 
-## ServerSessionManager.
+## ServerSessionManager
 
 `ServerSessionManager`, oddly enough, is responsible for the server side of Session Management. This is similar to `ServerManager`.
 You can get the `ServerSessionManager` by using `NetworkManager.GetServerSessionManager()`.
@@ -85,7 +89,7 @@ The OnRemotePlayerConnectionState event is available in this class. It is called
 - **PermanentlyDisconnected** - The player has been permanently disconnected and cannot reconnect to this session. Next time it will connect as a new player with the same PlayerId.
 - **TemporarilyDisconnected** - The player has been temporarily disconnected and can reconnect to this session using their own PlayerId.
 
-## ClientSessionManager.
+## ClientSessionManager
 
 The `ClientSessionManager` is responsible for the client side of Session Management. This is similar to `ClientManager`.
 You can get the `ClientSessionManager` by using `NetworkManager.GetClientSessionManager()`.
@@ -133,7 +137,7 @@ private void OnRemoteConnectionState(RemoteConnectionStateArgs args)
 This may seem complicated and confusing, so I recommend not using callbacks from the
 `ServerManager` and `ClientManager` to get `SessionPlayer`. It is better to use `ClientSessionManager` and `ServerSessionManager`.
 
-## SessionPlayer's ownership of NetworkObjects.
+## SessionPlayer's ownership of NetworkObjects
 
 Just like `NetworkConnection`, `SessionPlayer` can own NetworkObjects.
 Objects owned by the player become the property of the server when temporarily disconnected.
