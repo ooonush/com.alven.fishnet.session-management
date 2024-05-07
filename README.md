@@ -67,36 +67,6 @@ As you can see, the `PlayerId` string is only available on the server, which ens
 Clients cannot recognize the PlayerId of other players, and so that they can still distinguish between players, there is a ClientPlayerId.
 This is a unique player identifier that is available to both server and clients.
 
-### Unity technical limitations.
-You may need to synchronize SessionPlayer over the network. For example, send it using Rpc, or use it in [SyncVar].
-SessionManagement supports a custom serializer that allows you to do this.
-But unfortunately, due to Unity limitations, FishNet can't find custom serializers in other Assemblies.
-
-You get similar errors in the console:
-![image](https://github.com/ooonush/com.alven.fishnet.sessionmanagement/assets/72870405/bb35c321-d9a9-4a43-bfdd-9e9b541cf256)
-
-This means that you need to write a custom serializer in each Assembly in which you want to synchronize SessionPlayer.
-
-To do this, you can simply copy this script anywhere in your assembly:
-
-```csharp
-using FishNet.Alven.SessionManagement;
-using FishNet.Serializing;
-
-public static class SessionPlayerSerializer
-{
-    public static void WriteSessionPlayer(this Writer writer, SessionPlayer player)
-    {
-        FishNet.Alven.SessionManagement.SessionPlayerSerializer.WriteSessionPlayer(writer, player);
-    }
-
-    public static SessionPlayer ReadSessionPlayer(this Reader reader)
-    {
-       return FishNet.Alven.SessionManagement.SessionPlayerSerializer.ReadSessionPlayer(reader);
-    }
-}
-```
-
 ## ServerSessionManager.
 
 `ServerSessionManager`, oddly enough, is responsible for the server side of Session Management. This is similar to `ServerManager`.
