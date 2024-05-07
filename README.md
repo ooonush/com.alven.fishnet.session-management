@@ -20,6 +20,13 @@ Asset is completely free and created entirely by myself.
 
 - FishNet 4.1.3 or newer.
 
+## Installation
+
+Add this Git URL to Package Manager:
+```
+https://github.com/ooonush/com.alven.fishnet.session-management.git?path=Assets/FishNet/Plugins/Alven/SessionManagement
+```
+
 ## Player Identification
 
 In FishNet, when a player reconnects, a new NetworkConnection with a different ClientId is created for that player.
