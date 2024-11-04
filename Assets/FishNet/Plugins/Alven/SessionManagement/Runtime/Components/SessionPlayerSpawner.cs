@@ -96,6 +96,10 @@ namespace FishNet.Alven.SessionManagement
             // A player object can be created for a player if the player has previously connected and loaded the start scenes.
             if (_playerObjects.ContainsKey(player))
             {
+                if (_addToDefaultScene) {
+                    NetworkObject existingNob = _playerObjects[player].NetworkObject;
+                    _networkManager.SceneManager.AddOwnerToDefaultScene(existingNob);
+                }
                 return;
             }
 
