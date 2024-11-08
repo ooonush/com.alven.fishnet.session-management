@@ -29,6 +29,11 @@ namespace FishNet.Alven.SessionManagement
         [SerializeField]
         private NetworkSessionObject _playerPrefab;
         /// <summary>
+        /// Sets the PlayerPrefab to use.
+        /// </summary>
+        /// <param name="nob"></param>
+        public void SetPlayerPrefab(NetworkSessionObject nob) => _playerPrefab = nob;
+        /// <summary>
         /// True to add player to the active scene when no global scenes are specified through the SceneManager.
         /// </summary>
         [Tooltip("True to add player to the active scene when no global scenes are specified through the SceneManager.")]
