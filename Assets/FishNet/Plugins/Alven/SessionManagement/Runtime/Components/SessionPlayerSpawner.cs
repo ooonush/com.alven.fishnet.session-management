@@ -58,10 +58,6 @@ namespace FishNet.Alven.SessionManagement
         #endregion
 
         private readonly Dictionary<SessionPlayer, NetworkSessionObject> _playerObjects = new Dictionary<SessionPlayer, NetworkSessionObject>();
-        /// <summary>
-        /// Spawned Players.
-        /// </summary>
-        public IReadOnlyDictionary<SessionPlayer, NetworkSessionObject> SpawnedPlayers => _playerObjects;
 
         private ServerSessionManager _serverSessionManager;
 
@@ -87,7 +83,7 @@ namespace FishNet.Alven.SessionManagement
             _networkManager = InstanceFinder.NetworkManager;
             if (_networkManager == null)
             {
-                Debug.LogWarning($"PlayerSpawner on {gameObject.name} cannot work as NetworkManager wasn't found on this object or within parent objects.");
+                NetworkManagerExtensions.LogWarning($"PlayerSpawner on {gameObject.name} cannot work as NetworkManager wasn't found on this object or within parent objects.");
                 return;
             }
 
@@ -106,14 +102,28 @@ namespace FishNet.Alven.SessionManagement
             SessionPlayer player = conn.GetSessionPlayer();
             
             // A player object can be created for a player if the player has previously connected and loaded the start scenes.
-            if (_playerObjects.ContainsKey(player))
+            if (_playerObjects.TryGetValue(player, out NetworkSessionObject spawnedPlayer))
             {
+                if (!spawnedPlayer)
+                {
+                    NetworkManagerExtensions.LogWarning($@"Session Player {player} is reconnected, but Player object that was created with SessionPlayerSpawner was destroyed.");
+                    return;
+                }
+                if (spawnedPlayer.IsOffline)
+                {
+                    NetworkManagerExtensions.LogWarning($@"Session Player {player} is reconnected, but Player object that was created with SessionPlayerSpawner was despawned.");
+                    return;
+                }
+                if (_addToDefaultScene)
+                {
+                    _networkManager.SceneManager.AddOwnerToDefaultScene(spawnedPlayer.NetworkObject);
+                }
                 return;
             }
 
             if (_playerPrefab == null)
             {
-                Debug.LogWarning($"Player prefab is empty and cannot be spawned for connection {conn.ClientId}.");
+                NetworkManagerExtensions.LogWarning($"Player prefab is empty and cannot be spawned for connection {conn.ClientId}.");
                 return;
             }
 
