@@ -24,6 +24,9 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         public IReadOnlyDictionary<int, SessionPlayer> Players => _playersByClientIds;
 
+        /// <summary>
+        /// Start a Session on server starting.
+        /// </summary>
         [SerializeField] private bool _initiallySessionStarted;
         public bool IsSessionStarted { get; private set; }
         public event Action OnSessionStarted;

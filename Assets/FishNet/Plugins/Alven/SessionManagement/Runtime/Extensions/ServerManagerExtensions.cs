@@ -12,6 +12,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         /// <param name="playerObject">NetworkPlayerObject instance to spawn.</param>
         /// <param name="player">SessionPlayer to give ownership to.</param>
+        /// <param name="rebuildObservers">True to give ownership and add player to the Observers. False to give ownership without adding player to the Observers. This can be useful if you want to give ownership of the object that is in a scene that the player does not currently have loaded. </param>.
         public static void Spawn(this ServerManager serverManager, NetworkSessionObject playerObject, SessionPlayer player, Scene scene = default, bool rebuildObservers = true)
         {
             playerObject.GivingOwnership = true;
@@ -48,6 +49,7 @@ namespace FishNet.Alven.SessionManagement
         /// </summary>
         /// <param name="networkObject">NetworkObject instance to spawn.</param>
         /// <param name="player">SessionPlayer to give ownership to.</param>
+        /// <param name="rebuildObservers">True to give ownership and add player to the Observers. False to give ownership without adding player to the Observers. This can be useful if you want to give ownership of the object that is in a scene that the player does not currently have loaded. </param>.
         public static void Spawn(this ServerManager serverManager, NetworkObject networkObject, SessionPlayer player, Scene scene = default, bool rebuildObservers = true)
         {
             var networkPlayerObject = networkObject.GetComponent<NetworkSessionObject>();

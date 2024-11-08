@@ -7,6 +7,10 @@ using UnityEngine;
 
 namespace FishNet.Alven.SessionManagement
 {
+    /// <summary>
+    /// Spawns a player object for session players when they connect.
+    /// Must be placed on or beneath the NetworkManager object.
+    /// </summary>
     [AddComponentMenu("FishNet/Component/SessionPlayerSpawner")]
     public class SessionPlayerSpawner : MonoBehaviour
     {
@@ -70,6 +74,9 @@ namespace FishNet.Alven.SessionManagement
             }
         }
 
+        /// <summary>
+        /// Initializes this script for use.
+        /// </summary>
         private void InitializeOnce()
         {
             _networkManager = InstanceFinder.NetworkManager;
